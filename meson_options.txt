@@ -1,0 +1,6 @@
+option(
+	'with_debug',
+	type: 'boolean',
+	value: false,
+	description: 'build debug version of the library'
+)
