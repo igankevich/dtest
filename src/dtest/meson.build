@@ -1,4 +1,4 @@
-dtest_src = files([
+dtest_lib_src = files([
     'application.cc',
     'cluster.cc',
     'cluster_node_bitmap.cc',
@@ -9,7 +9,7 @@ dtest_lib_deps = [unistdx,threads]
 
 dtest_lib = library(
     'dtest',
-    sources: dtest_src,
+    sources: dtest_lib_src,
     include_directories: src,
     dependencies: dtest_lib_deps,
     implicit_include_directories: false,
@@ -32,9 +32,14 @@ pkgconfig.generate(
     description: project_description,
 )
 
+dtest_src = files([
+    'main.cc',
+    'python.cc',
+])
+
 dtest_exe = executable(
     'dtest',
-    sources: dtest_src + ['main.cc'],
+    sources: dtest_src,
     include_directories: src,
     dependencies: [dtest,python3],
     implicit_include_directories: false,
@@ -50,4 +55,5 @@ install_headers(
     subdir: meson.project_name()
 )
 
+clang_tidy_files += dtest_lib_src
 clang_tidy_files += dtest_src
