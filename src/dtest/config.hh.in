@@ -1,0 +1,6 @@
+#ifndef DTEST_CONFIG_HH_IN
+#define DTEST_CONFIG_HH_IN
+
+#define DTEST_VERSION "@DTEST_VERSION@"
+
+#endif // vim:filetype=cpp

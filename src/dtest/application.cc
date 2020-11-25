@@ -7,6 +7,7 @@
 #include <unistdx/io/two_way_pipe>
 #include <unistdx/ipc/execute>
 #include <unistdx/ipc/identity>
+#include <unistdx/ipc/signal>
 #include <unistdx/it/intersperse_iterator>
 #include <unistdx/net/interface_address>
 #include <unistdx/net/network_interface>
@@ -15,7 +16,7 @@
 
 void dts::application::usage() {
     std::cout <<
-        "dtest [-h] [--help] [--exit-code code] [--restart] [--name name] [--size n]\n"
+        "usage: dtest [-h] [--help] [--exit-code code] [--restart] [--name name] [--size n]\n"
         "      [--network ip/prefix] [--peer-network ip/prefix]\n"
         "      [--exec where command argument1...]\n"
         "--exit-code code      how exit code of child processes is accumulated,\n"
@@ -128,7 +129,7 @@ void dts::application::run_process(cluster_node_bitmap where, sys::argstream arg
             err = stderr.out();
             sys::this_process::enter(node.network_namespace().fd());
             sys::this_process::enter(node.hostname_namespace().fd());
-            return sys::this_process::execute(args.argv());
+            return sys::this_process::execute_command(args.argv());
         });
         this->_child_process_nodes.emplace_back(i);
         stdout.out().close();
@@ -217,13 +218,32 @@ int dts::application::accumulate_return_value() {
     return ret;
 }
 
+void dts::application::validate() {
+    auto& nodes = this->_cluster.nodes();
+    auto num_nodes = nodes.size();
+    auto num_processes = this->_arguments.size();
+    for (size_t i=0; i<num_nodes; ++i) {
+        bool has_process = false;
+        for (size_t j=0; j<num_processes; ++j) {
+            const auto& where = this->_where[j];
+            if (where.matches(i)) { has_process = true; break; }
+        }
+        if (!has_process) {
+            std::stringstream msg;
+            msg << "Node " << nodes[i].name() << " does have any processes.";
+            throw std::runtime_error(msg.str());
+        }
+    }
+}
+
 void dts::application::run() {
+    validate();
     this->_no_tests = this->_tests.empty();
     if (this->_cluster.size() == 1) {
         { sys::network_interface lo("lo"); lo.setf(sys::network_interface::flag::up); }
         for (const auto& a : this->_arguments) {
             this->_child_processes.emplace([&a] () {
-                return sys::this_process::execute(a.argv());
+                return sys::this_process::execute_command(a.argv());
             });
         }
     } else {
@@ -231,7 +251,7 @@ void dts::application::run() {
         auto num_nodes = nodes.size();
         auto num_processes = this->_arguments.size();
         using f = sys::network_interface::flag;
-        using sys::this_process::execute;
+        using sys::this_process::execute_command;
         using sys::this_process::enter;
         std::vector<sys::two_way_pipe> pipes;
         for (size_t i=0; i<num_nodes; ++i) {
@@ -285,7 +305,7 @@ void dts::application::run() {
                                   duration_cast<milliseconds>(delay).count(),
                                   sys::this_process::id());
                         std::this_thread::sleep_for(delay);
-                        sys::this_process::execute(args.argv());
+                        sys::this_process::execute_command(args.argv());
                     } catch (const std::exception& err) {
                         this->log("child _ _", j+1, err.what());
                         return 1;

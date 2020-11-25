@@ -78,11 +78,20 @@ namespace dts {
     namespace python {
         void init();
         void terminate();
+        void application(::dts::application* ptr);
+        int application_exit_code();
         PyObject* hello(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* cluster(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* exit_code(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* add_process(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* run_process(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* kill_node(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* add_test(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* will_restart(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* execution_delay(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* run(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* fail(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* expect_event_sequence(PyObject* self, PyObject* args, PyObject* kwds);
     }
 }
 

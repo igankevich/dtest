@@ -25,6 +25,14 @@ namespace dts {
         inline size_t size() const noexcept { return this->_nodes.size(); }
         void read(std::string arg);
         friend std::ostream& operator<<(std::ostream& out, const cluster_node_bitmap& rhs);
+
+        cluster_node_bitmap() = default;
+        ~cluster_node_bitmap() = default;
+        cluster_node_bitmap(const cluster_node_bitmap&) = default;
+        cluster_node_bitmap& operator=(const cluster_node_bitmap&) = default;
+        cluster_node_bitmap(cluster_node_bitmap&&) = default;
+        cluster_node_bitmap& operator=(cluster_node_bitmap&&) = default;
+
     };
 
     std::ostream& operator<<(std::ostream& out, const cluster_node_bitmap& rhs);

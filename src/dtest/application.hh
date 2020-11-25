@@ -127,9 +127,10 @@ namespace dts {
         application() = default;
         inline explicit application(int argc, char* argv[]) { this->init(argc, argv); }
 
-        void usage();
+        static void usage();
         void init(int argc, char* argv[]);
         void run();
+        void validate();
         int wait();
 
         inline void send(sys::signal s) { this->_child_processes.send(s); }
@@ -162,6 +163,7 @@ namespace dts {
         }
 
         inline void add_test(test t) { this->_tests.emplace(std::move(t)); }
+
         template <class ... Args>
         inline void emplace_test(Args&& ... args) {
             this->_tests.emplace(std::forward<Args>(args)...);

@@ -1,3 +1,8 @@
+config = configuration_data()
+config.set('DTEST_VERSION', meson.project_version())
+configure_file(configuration: config, input: 'config.hh.in', output: 'config.hh')
+
+
 dtest_lib_src = files([
     'application.cc',
     'cluster.cc',
@@ -34,12 +39,25 @@ pkgconfig.generate(
 
 dtest_src = files([
     'main.cc',
+])
+
+executable(
+    'dtest',
+    sources: dtest_src,
+    include_directories: src,
+    dependencies: [dtest],
+    implicit_include_directories: false,
+    install: true,
+)
+
+dtest_python_src = files([
+    'python_main.cc',
     'python.cc',
 ])
 
-dtest_exe = executable(
-    'dtest',
-    sources: dtest_src,
+executable(
+    'dtest-python',
+    sources: dtest_python_src,
     include_directories: src,
     dependencies: [dtest,python3],
     implicit_include_directories: false,
