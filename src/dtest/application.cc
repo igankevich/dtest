@@ -4,6 +4,7 @@
 #include <string>
 
 #include <unistdx/base/command_line>
+//#include <unistdx/base/log_message>
 #include <unistdx/io/two_way_pipe>
 #include <unistdx/ipc/execute>
 #include <unistdx/ipc/identity>
@@ -455,6 +456,7 @@ namespace  {
         using namespace sys::this_process;
         auto on_terminate = sys::signal_action([](int sig) {
             const auto is_alarm = sys::signal(sig) == sys::signal::alarm;
+            //sys::log_message("DBG", "child signal _", sys::signal(sig));
             if (aptr) {
                 try {
                     aptr->send(is_alarm ? sys::signal::kill : sys::signal::terminate);
@@ -463,19 +465,23 @@ namespace  {
                 }
             }
             if (!is_alarm) { ::alarm(3); }
+            else { std::exit(sig); }
         });
         using s = sys::signal;
         ignore_signal(s::broken_pipe);
         bind_signal(s::terminate, on_terminate);
         bind_signal(s::keyboard_interrupt, on_terminate);
         bind_signal(s::alarm, on_terminate);
+        bind_signal(s::quit, on_terminate);
     }
 
     void parent_signal_handlers() {
         using namespace sys::this_process;
         using s = sys::signal;
-        auto on_terminate = sys::signal_action([](int) {
+        auto on_terminate = sys::signal_action([](int sig) {
             if (child_process_id) {
+                //sys::log_message("DBG", "parent signal _ child _",
+                //                 sys::signal(sig), child_process_id);
                 try {
                     sys::process_view(child_process_id).send(s::terminate);
                 } catch (const std::exception& err) {
@@ -483,11 +489,13 @@ namespace  {
                     ::write(2, msg, std::string::traits_type::length(msg));
                     ::write(2, err.what(), std::string::traits_type::length(err.what()));
                 }
+                std::exit(sig);
             }
         });
         ignore_signal(s::broken_pipe);
         bind_signal(s::keyboard_interrupt, on_terminate);
         bind_signal(s::terminate, on_terminate);
+        bind_signal(s::quit, on_terminate);
     }
 
     int nested_run(dts::application& app) {

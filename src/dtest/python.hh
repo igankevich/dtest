@@ -9,7 +9,9 @@ namespace python {
 
     class interpreter_guard {
     public:
-        inline interpreter_guard() noexcept { ::Py_Initialize(); }
+        inline explicit interpreter_guard(bool init_signal_handlers=false) noexcept {
+            ::Py_InitializeEx(init_signal_handlers ? 1 : 0);
+        }
         inline ~interpreter_guard() noexcept { ::Py_FinalizeEx(); }
         interpreter_guard(const interpreter_guard&) = delete;
         interpreter_guard& operator=(const interpreter_guard&) = delete;
