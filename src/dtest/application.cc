@@ -4,7 +4,6 @@
 #include <string>
 
 #include <unistdx/base/command_line>
-//#include <unistdx/base/log_message>
 #include <unistdx/io/two_way_pipe>
 #include <unistdx/ipc/execute>
 #include <unistdx/ipc/identity>
@@ -12,8 +11,27 @@
 #include <unistdx/it/intersperse_iterator>
 #include <unistdx/net/interface_address>
 #include <unistdx/net/network_interface>
+#include <unistdx/system/error>
 
 #include <dtest/application.hh>
+
+namespace  {
+    void print_stack_trace() {
+        if (auto ptr = std::current_exception()) {
+            try {
+                std::rethrow_exception(ptr);
+            } catch (const std::exception& err) {
+                std::cerr << "terminate called after throwing exception: "
+                    << sys::error(err.what()).what() << '\n';
+            } catch (...) {
+                std::cerr << "terminate called after throwing unknown exception\n";
+            }
+        } else {
+            std::cerr << "terminate called without current exception\n";
+        }
+        std::_Exit(1);
+    }
+}
 
 void dts::application::usage() {
     std::cout <<
@@ -122,6 +140,7 @@ void dts::application::run_process(cluster_node_bitmap where, sys::argstream arg
             this->log("_", tmp.str());
         }
         this->_child_processes.emplace([&] () {
+            std::set_terminate(print_stack_trace);
             stdout.in().close();
             stderr.in().close();
             sys::fildes out(STDOUT_FILENO);
@@ -244,6 +263,7 @@ void dts::application::run() {
         { sys::network_interface lo("lo"); lo.setf(sys::network_interface::flag::up); }
         for (const auto& a : this->_arguments) {
             this->_child_processes.emplace([&a] () {
+                std::set_terminate(print_stack_trace);
                 return sys::this_process::execute_command(a.argv());
             });
         }
@@ -281,36 +301,32 @@ void dts::application::run() {
                 stderr.out().unsetf(sys::open_flag::non_blocking);
                 using pf = sys::process_flag;
                 this->_child_processes.emplace([&] () {
-                    try {
-                        stdout.in().close();
-                        stderr.in().close();
-                        sys::fildes out(STDOUT_FILENO);
-                        out = stdout.out();
-                        sys::fildes err(STDERR_FILENO);
-                        err = stderr.out();
-                        if (!first_process) {
-                            enter(node.network_namespace().fd());
-                            enter(node.hostname_namespace().fd());
-                        }
-                        pipe.close_in_child();
-                        std::stringstream tmp;
-                        tmp << node.peer_interface_address();
-                        ::setenv("DTEST_INTERFACE_ADDRESS", tmp.str().data(), 1);
-                        char ch;
-                        pipe.child_in().read(&ch, 1);
-                        sys::this_process::hostname(veth.name());
-                        pipe.child_in().read(&ch, 1);
-                        auto delay = this->_execution_delay*((i+1)+(j+1)*num_nodes);
-                        using namespace std::chrono;
-                        this->log("child _ delay _ms pid _", args.argv()[0],
-                                  duration_cast<milliseconds>(delay).count(),
-                                  sys::this_process::id());
-                        std::this_thread::sleep_for(delay);
-                        sys::this_process::execute_command(args.argv());
-                    } catch (const std::exception& err) {
-                        this->log("child _ _", j+1, err.what());
-                        return 1;
+                    std::set_terminate(print_stack_trace);
+                    stdout.in().close();
+                    stderr.in().close();
+                    sys::fildes out(STDOUT_FILENO);
+                    out = stdout.out();
+                    sys::fildes err(STDERR_FILENO);
+                    err = stderr.out();
+                    if (!first_process) {
+                        enter(node.network_namespace().fd());
+                        enter(node.hostname_namespace().fd());
                     }
+                    pipe.close_in_child();
+                    std::stringstream tmp;
+                    tmp << node.peer_interface_address();
+                    ::setenv("DTEST_INTERFACE_ADDRESS", tmp.str().data(), 1);
+                    char ch;
+                    pipe.child_in().read(&ch, 1);
+                    sys::this_process::hostname(veth.name());
+                    pipe.child_in().read(&ch, 1);
+                    auto delay = this->_execution_delay*((i+1)+(j+1)*num_nodes);
+                    using namespace std::chrono;
+                    this->log("child _ delay _ms pid _", args.argv()[0],
+                              duration_cast<milliseconds>(delay).count(),
+                              sys::this_process::id());
+                    std::this_thread::sleep_for(delay);
+                    sys::this_process::execute_command(args.argv());
                     return 0;
                 }, pf::signal_parent | pf::unshare_network | pf::unshare_hostname);
                 this->_child_process_nodes.emplace_back(i);
@@ -397,23 +413,17 @@ bool dts::application::run_tests() {
         auto& test = this->_tests.front();
         try {
             test(*this, this->_lines);
-            std::cerr << "========================================\n";
-            std::cerr << test.description() << '\n';
-            std::cerr << "Completed successfully.\n";
-            std::cerr << "========================================\n";
+            std::cerr << "dtest: " << test.description() << '\n';
+            std::cerr << "dtest: Completed successfully.\n";
         } catch (const std::exception& err) {
-            std::cerr << "========================================\n";
-            std::cerr << test.description() << '\n';
-            std::cerr << err.what();
-            std::cerr << "========================================\n";
+            std::cerr << "dtest: " << test.description() << '\n';
+            std::cerr << "dtest: " << err.what();
             break;
         }
         this->_tests.pop();
     }
     if (this->_tests.empty()) {
-        std::cerr << "========================================\n";
-        std::cerr << "All tests completed successfully.\n";
-        std::cerr << "========================================\n";
+        std::cerr << "dtest: All tests completed successfully.\n";
     }
     return this->_tests.empty();
 }
@@ -473,6 +483,7 @@ namespace  {
         bind_signal(s::keyboard_interrupt, on_terminate);
         bind_signal(s::alarm, on_terminate);
         bind_signal(s::quit, on_terminate);
+        bind_signal(s::hang_up, on_terminate);
     }
 
     void parent_signal_handlers() {
@@ -496,6 +507,7 @@ namespace  {
         bind_signal(s::keyboard_interrupt, on_terminate);
         bind_signal(s::terminate, on_terminate);
         bind_signal(s::quit, on_terminate);
+        bind_signal(s::hang_up, on_terminate);
     }
 
     int nested_run(dts::application& app) {
