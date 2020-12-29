@@ -8,7 +8,8 @@
           (list (@ (gnu packages gcc) gcc) "lib")
           (@ (gnu packages check) googletest)
           (@ (gnu packages unistdx) unistdx)
-          (@ (gnu packages unistdx) unistdx-debug)
+          (@ (gnu packages compression) zlib)
+          (@ (gnu packages compression) xz)
           (@ (gnu packages pre-commit) python-pre-commit)
           (@ (gnu packages python) python-3)
           (list (@ (gnu packages llvm) clang-10) "extra") ;; clang-tidy
