@@ -10,12 +10,6 @@ namespace {
 
     PyMethodDef dts_methods[] = {
         {
-            .ml_name = "hello",
-            .ml_meth = (PyCFunction) dts::python::hello,
-            .ml_flags = METH_VARARGS | METH_KEYWORDS,
-            .ml_doc = "Hello world!"
-        },
-        {
             .ml_name = "cluster",
             .ml_meth = (PyCFunction) dts::python::cluster,
             .ml_flags = METH_VARARGS | METH_KEYWORDS,
@@ -194,6 +188,7 @@ void python::set_arguments(int argc, char** argv) {
 
 void python::load(const char* filename) {
     auto fp = std::fopen(filename, "rb");
+    if (!fp) { throw std::system_error(errno, std::generic_category()); }
     ::PyCompilerFlags flags{};
     ::PyRun_SimpleFileExFlags(fp, filename, true, &flags);
 }
@@ -208,11 +203,6 @@ void dts::python::init() {
 
 void dts::python::terminate() {
     python_application->terminate();
-}
-
-PyObject* dts::python::hello(PyObject* self, PyObject* args, PyObject* kwds) {
-    std::cout << "Hello world!" << std::endl;
-    Py_RETURN_NONE;
 }
 
 PyObject* dts::python::cluster(PyObject* self, PyObject* args, PyObject* kwds) {

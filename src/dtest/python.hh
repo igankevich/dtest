@@ -82,7 +82,6 @@ namespace dts {
         void terminate();
         void application(::dts::application* ptr);
         int application_exit_code();
-        PyObject* hello(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* cluster(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* exit_code(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* add_process(PyObject* self, PyObject* args, PyObject* kwds);

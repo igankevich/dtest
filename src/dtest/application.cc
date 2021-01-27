@@ -386,13 +386,8 @@ void dts::application::process_events() {
         ignore_signal(sys::signal::broken_pipe);
         lock_type lock(this->_mutex);
         this->_poller.wait(lock, [this,&lock] () {
-            auto pipe_fd = this->_poller.pipe_in();
-            for (const auto& event : this->_poller) {
-                if (event.fd() == pipe_fd) { continue; }
-                for (auto& output : this->_output) {
-                    //if (event.fd() == output.in().fd()) { output.copy(); }
-                    output.copy(this->_lines);
-                }
+            for (auto& output : this->_output) {
+                output.copy(this->_lines);
             }
             if (!this->_no_tests) {
                 if (!this->_tests_succeeded && run_tests()) {
@@ -417,7 +412,11 @@ bool dts::application::run_tests() {
             std::cerr << "dtest: Completed successfully.\n";
         } catch (const std::exception& err) {
             std::cerr << "dtest: " << test.description() << '\n';
-            std::cerr << "dtest: " << err.what();
+            std::string what = err.what();
+            std::cerr << "dtest: " << what;
+            if (what.empty() || what.back() != '\n') {
+                std::cerr << '\n';
+            }
             break;
         }
         this->_tests.pop();

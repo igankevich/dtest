@@ -41,7 +41,7 @@ dtest_src = files([
     'main.cc',
 ])
 
-executable(
+dtest_exe = executable(
     'dtest',
     sources: dtest_src,
     include_directories: src,
@@ -55,7 +55,7 @@ dtest_python_src = files([
     'python.cc',
 ])
 
-executable(
+dtest_python_exe = executable(
     'dtest-python',
     sources: dtest_python_src,
     include_directories: src,

@@ -1,1 +1,2 @@
 subdir('dtest')
+subdir('test')
