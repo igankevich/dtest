@@ -1,7 +1,7 @@
 #ifndef DTEST_PYTHON_HH
 #define DTEST_PYTHON_HH
 
-#include <Python.h>
+#include <dtest/python-system.hh>
 
 #include <memory>
 

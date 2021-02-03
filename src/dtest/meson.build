@@ -70,6 +70,9 @@ install_headers(
     'cluster_node.hh',
     'cluster_node_bitmap.hh',
     'exit_code.hh',
+    'exit_code.hh',
+    'python.hh',
+    'python-system.hh',
     subdir: meson.project_name()
 )
 
