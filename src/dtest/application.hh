@@ -121,6 +121,7 @@ namespace dts {
         bool _tests_succeeded = false;
         std::promise<void> _tests_completed;
         mutable mutex_type _mutex;
+        bool _user_namespaces = true;
 
     public:
 
@@ -146,6 +147,9 @@ namespace dts {
         inline exit_code_type exit_code() const noexcept { return this->_exit_code; }
         inline void execution_delay(duration rhs) noexcept { this->_execution_delay = rhs; }
         inline duration execution_delay() const noexcept { return this->_execution_delay; }
+        inline bool user_namespaces() const noexcept { return this->_user_namespaces; }
+        inline void user_namespaces(bool rhs) noexcept { this->_user_namespaces = rhs; }
+
         void add_process(cluster_node_bitmap nodes, sys::argstream args);
         void run_process(cluster_node_bitmap where, sys::argstream args);
         void kill_process(cluster_node_bitmap where, sys::signal signal);

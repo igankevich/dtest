@@ -1,7 +1,7 @@
 project(
     'dtest',
     'cpp',
-    version: '0.3.4',
+    version: '0.4.0',
     meson_version: '>=0.50.0',
     default_options: ['cpp_std=c++11'],
     license: 'gpl3+'

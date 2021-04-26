@@ -515,6 +515,10 @@ namespace  {
         pipe.in().unsetf(sys::open_flag::non_blocking);
         pipe.out().unsetf(sys::open_flag::non_blocking);
         using pf = sys::process_flag;
+        pf flags = pf::unshare_network | pf::unshare_hostname | pf::signal_parent;
+        if (app.user_namespaces()) {
+            flags |= pf::unshare_users;
+        }
         sys::process child([&pipe,&app] () {
             try {
                 child_signal_handlers();
@@ -528,11 +532,11 @@ namespace  {
                 std::cerr << err.what() << std::endl;
                 return 1;
             }
-        },
-        pf::unshare_users | pf::unshare_network | pf::unshare_hostname | pf::signal_parent,
-        4096*10);
+        }, flags, 4096*10);
         child_process_id = child.id();
-        child.init_user_namespace();
+        if (app.user_namespaces()) {
+            child.init_user_namespace();
+        }
         pipe.in().close();
         pipe.out().write("x", 1);
         return child.wait().exit_code();

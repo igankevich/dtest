@@ -89,6 +89,7 @@ namespace dts {
         PyObject* kill_node(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* add_test(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* will_restart(PyObject* self, PyObject* args, PyObject* kwds);
+        PyObject* user_namespaces(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* execution_delay(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* run(PyObject* self, PyObject* args, PyObject* kwds);
         PyObject* fail(PyObject* self, PyObject* args, PyObject* kwds);

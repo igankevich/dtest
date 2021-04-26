@@ -65,6 +65,15 @@ namespace {
                 "Useful when testing power outage."
         },
         {
+            .ml_name = "user_namespaces",
+            .ml_meth = (PyCFunction) dts::python::user_namespaces,
+            .ml_flags = METH_VARARGS | METH_KEYWORDS,
+            .ml_doc =
+                "Use user namespaces to ger root privileges. "
+                "Disable user namespaces only when you already have root priviliges. "
+                "Useful when your application gives weird permission errors."
+        },
+        {
             .ml_name = "execution_delay",
             .ml_meth = (PyCFunction) dts::python::execution_delay,
             .ml_flags = METH_VARARGS | METH_KEYWORDS,
@@ -290,6 +299,15 @@ PyObject* dts::python::will_restart(PyObject* self, PyObject* args, PyObject* kw
         return nullptr;
     }
     python_application->will_restart(bool(value));
+    Py_RETURN_NONE;
+}
+
+PyObject* dts::python::user_namespaces(PyObject* self, PyObject* args, PyObject* kwds) {
+    int value = 0;
+    if (!PyArg_ParseTuple(args, "p", &value)) {
+        return nullptr;
+    }
+    python_application->user_namespaces(bool(value));
     Py_RETURN_NONE;
 }
 
